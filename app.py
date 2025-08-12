@@ -31,28 +31,26 @@ def get_all_stock_names():
     return jsonify(results)
 
 
-@app.route('/api/stock/<ticker>', methods=['GET'])
-def get_stock_info(ticker):
+@app.route('/api/stocks/details/<ticker>', methods=['GET'])
+def get_stock_details(ticker):
+    """Returnerar detaljerad info för en specifik ticker."""
     try:
         stock = yf.Ticker(ticker)
         info = stock.info
 
+        price = info.get("regularMarketPrice")
         name = info.get("longName", "N/A")
-        price = info.get("currentPrice", "N/A")
-        change = info.get("regularMarketChangePercent")
-        currency = info.get("currency", "N/A")
 
-        if change is not None:
-            change = f"{change:+.2f}%"
+        # Gör om change till en sträng med + eller - och avrunda till 2 decimaler
+        change_value = info.get("regularMarketChange")
+        if isinstance(change_value, (int, float)):
+            change = f"{change_value:+.2f}%"
         else:
             change = "N/A"
 
-        return jsonify({
-            "ticker": ticker,
-            "name": name,
-            "change": change,
-            "price": str(price) if price != "N/A" else None,
-            "currency": currency,
+        currency = info.get("currency", "N/A")
+
+        metrics = {
             "market_cap": info.get("marketCap"),
             "enterprise_value": info.get("enterpriseValue"),
             "trailing_pe": info.get("trailingPE"),
@@ -61,8 +59,18 @@ def get_stock_info(ticker):
             "ps_ratio": info.get("priceToSalesTrailing12Months"),
             "pb_ratio": info.get("priceToBook"),
             "ev_revenue": info.get("enterpriseToRevenue"),
-            "ev_ebitda": info.get("enterpriseToEbitda")
+            "ev_ebitda": info.get("enterpriseToEbitda"),
+        }
+
+        return jsonify({
+            "ticker": ticker,
+            "name": name,
+            "change": change,
+            "price": str(price) if price is not None else None,
+            "currency": currency,
+            "metrics": metrics
         })
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
