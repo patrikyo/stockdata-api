@@ -33,44 +33,40 @@ def get_all_stock_names():
 
 @app.route('/api/stocks/details/<ticker>', methods=['GET'])
 def get_stock_details(ticker):
-    """Returnerar detaljerad info för en specifik ticker."""
     try:
         stock = yf.Ticker(ticker)
         info = stock.info
 
         price = info.get("regularMarketPrice")
-        name = info.get("longName", "N/A")
+        name = info.get("longName")
+        change_raw = info.get("regularMarketChange")
 
-        # Gör om change till en sträng med + eller - och avrunda till 2 decimaler
-        change_value = info.get("regularMarketChange")
-        if isinstance(change_value, (int, float)):
-            change = f"{change_value:+.2f}%"
+        # Gör change till float eller None om inte finns
+        if change_raw is not None:
+            change = round(float(change_raw), 2)
         else:
-            change = "N/A"
+            change = None
 
-        currency = info.get("currency", "N/A")
+        currency = info.get("currency")
 
-        metrics = {
-            "market_cap": info.get("marketCap"),
-            "enterprise_value": info.get("enterpriseValue"),
-            "trailing_pe": info.get("trailingPE"),
-            "forward_pe": info.get("forwardPE"),
-            "peg_ratio": info.get("pegRatio"),
-            "ps_ratio": info.get("priceToSalesTrailing12Months"),
-            "pb_ratio": info.get("priceToBook"),
-            "ev_revenue": info.get("enterpriseToRevenue"),
-            "ev_ebitda": info.get("enterpriseToEbitda"),
-        }
-
-        return jsonify({
+        return jsonify({    
             "ticker": ticker,
             "name": name,
             "change": change,
-            "price": str(price) if price is not None else None,
+            "price": round(float(price), 2) if price is not None else None,
             "currency": currency,
-            "metrics": metrics
+            "metrics": {
+                "market_cap": info.get("marketCap"),
+                "enterprise_value": info.get("enterpriseValue"),
+                "trailing_pe": info.get("trailingPE"),
+                "forward_pe": info.get("forwardPE"),
+                "peg_ratio": info.get("pegRatio"),
+                "ps_ratio": info.get("priceToSalesTrailing12Months"),
+                "pb_ratio": info.get("priceToBook"),
+                "ev_revenue": info.get("enterpriseToRevenue"),
+                "ev_ebitda": info.get("enterpriseToEbitda")
+            }
         })
-
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
