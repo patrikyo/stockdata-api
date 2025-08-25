@@ -14,6 +14,23 @@ tickers = [
     "ADDT-B.ST",
     "AFRY.ST",
     "ALFA.ST",
+    "ALIG.ST",
+    "ALLEI.ST",
+    "ALLIGO-B.ST",
+    "ALVO-SDB.ST",
+    "AMBEA.ST",
+    "APOTEA.ST",
+    "AQ.ST",
+    "ARP.ST",
+    "ARION-SDB.ST",
+    "ARISE.ST",
+    "ARJO-B.ST"
+
+
+
+
+
+
 ]
 
 @app.route('/api/stocks/names', methods=['GET'])
@@ -36,12 +53,21 @@ def get_stock_details(ticker):
     try:
         stock = yf.Ticker(ticker)
         info = stock.info
+        
+        # Hämta historisk intradagsdata för de senaste 24 timmarna med 5-minuters intervall
+        hist_data = stock.history(period="1d", interval="5m")
+
+        # Konvertera "Close"-kolumnen till en lista med priser
+        # Kontrollera att det finns data innan du försöker komma åt den
+        if not hist_data.empty:
+            price_history = hist_data['Close'].dropna().tolist()
+        else:
+            price_history = [] # Returnera en tom lista om ingen data hittas
 
         price = info.get("regularMarketPrice")
         name = info.get("longName")
         change_raw = info.get("regularMarketChange")
 
-        # Gör change till float eller None om inte finns
         if change_raw is not None:
             change = round(float(change_raw), 2)
         else:
@@ -49,7 +75,7 @@ def get_stock_details(ticker):
 
         currency = info.get("currency")
 
-        return jsonify({    
+        return jsonify({
             "ticker": ticker,
             "name": name,
             "change": change,
@@ -65,7 +91,8 @@ def get_stock_details(ticker):
                 "pb_ratio": info.get("priceToBook"),
                 "ev_revenue": info.get("enterpriseToRevenue"),
                 "ev_ebitda": info.get("enterpriseToEbitda")
-            }
+            },
+            "priceHistory": price_history
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -91,17 +118,19 @@ if __name__ == '__main__':
 #   "ADDT-B.ST",
 #   "AFRY.ST",
 #   "ALFA.ST",
-#   "ALIG.ST",
+#   "ALIG.ST"
 #   "ALLEI.ST",
 #   "ALLIGO-B.ST",
 #   "ALVO-SDB.ST",
 #   "AMBEA.ST",
 #   "APOTEA.ST",
 #   "AQ.ST",
-#   "Arctic Paper",
-#   "Arion Banki SDB",
-#   "Arise",
-#   "Arjo B",
+#   "ARP.ST"
+#   "ARION-SDB.ST",
+#   "ARISE.ST",
+#   "ARJO-B.ST",
+
+
 #   "Asker Healthcare Group",
 #   "Asmodee Group B",
 #   "ASSA ABLOY B",
