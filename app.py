@@ -1,6 +1,7 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 import yfinance as yf
+import os 
 
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000"])
@@ -25,12 +26,6 @@ tickers = [
     "ARION-SDB.ST",
     "ARISE.ST",
     "ARJO-B.ST"
-
-
-
-
-
-
 ]
 
 @app.route('/api/stocks/names', methods=['GET'])
@@ -44,7 +39,7 @@ def get_all_stock_names():
             if info.get("longName"):
                 results.append({"ticker": ticker, "name": info["longName"]})
         except Exception:
-            continue  # hoppa över om yfinance kastar fel
+            continue
     return jsonify(results)
 
 
@@ -54,15 +49,12 @@ def get_stock_details(ticker):
         stock = yf.Ticker(ticker)
         info = stock.info
         
-        # Hämta historisk intradagsdata för de senaste 24 timmarna med 5-minuters intervall
         hist_data = stock.history(period="1d", interval="5m")
 
-        # Konvertera "Close"-kolumnen till en lista med priser
-        # Kontrollera att det finns data innan du försöker komma åt den
         if not hist_data.empty:
             price_history = hist_data['Close'].dropna().tolist()
         else:
-            price_history = [] # Returnera en tom lista om ingen data hittas
+            price_history = []
 
         price = info.get("regularMarketPrice")
         name = info.get("longName")
@@ -99,8 +91,10 @@ def get_stock_details(ticker):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
-
+    # Get the port from the environment, defaulting to 5000
+    port = int(os.environ.get("PORT", 5000))
+    # Run the app, binding to 0.0.0.0 to accept external requests
+    app.run(host='0.0.0.0', port=port, debug=True)
 
 
 
