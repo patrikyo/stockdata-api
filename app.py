@@ -4,7 +4,9 @@ import yfinance as yf
 import os 
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:3000"])
+
+CORS(app, resources={r"/api/*": {"origins": ["http://localhost:3000", "https://stockdata-k09z.onrender.com"]}})
+
 
 tickers = [
     "AAK.ST",
